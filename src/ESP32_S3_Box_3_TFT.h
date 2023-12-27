@@ -8,6 +8,10 @@
 #error Please select the right board in the Arduino IDE: ESP32-S3-Box
 #endif
 
+// Using the pins definition from ESP-S3-BOX in Arduino, it is necessary to change the Back Light control IO
+#undef TFT_BL
+#define TFT_BL 47
+
 #include <Adafruit_GFX.h>
 #include <Adafruit_SPITFT.h>
 #include <Adafruit_SPITFT_Macros.h>
