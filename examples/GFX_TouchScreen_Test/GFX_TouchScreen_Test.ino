@@ -85,31 +85,64 @@ void setup() {
 
 }
 
-uint8_t rotationMode = 0;
+uint8_t nextRotation = 0, lastRotation = 0;
 unsigned long lastRotationTime = 0;
-const unsigned long rotationDelay = 1000; // milliseconds
+const unsigned long rotationDelay = 5000; // milliseconds
 
 void loop(void) {
-  
+
   if (millis() > lastRotationTime) {
-    tft.setRotation(rotationMode);
-    Serial.printf("Rotation set to %i\n", rotationMode);
+    tft.setRotation(nextRotation);
+    Serial.printf("Rotation set to %i\n", nextRotation);
     testText();
-    
-    rotationMode = (rotationMode + 1) & 0x03; // increases in the range 0..3
+    lastRotation = nextRotation;
+    nextRotation = (nextRotation + 1) & 0x03; // increases in the range 0..3
     lastRotationTime = millis() + rotationDelay;
   }
-  
+
   // Wait for a touch
   if (! ts.touched()) {
     return;
   }
   // Retrieve a point
   TS_Point p = ts.getPoint();
-  // flip X around to match the screen.
-  p.x = map(p.x, 0, 320, 320, 0);
   // Print out raw data from screen touch controller
-  Serial.printf("X = %i \tY = %i\n", p.x, p.y);
+  Serial.printf("TS Raw Coordinates X = %i \tY = %i\n", p.x, p.y);
+  // calculates touch coordinates, considering the display rotation
+  // flip X, Y around to match the screen coordinates.
+  switch (lastRotation) {
+    case 0: {
+        // mirror TS.X
+        p.x = map(p.x, 0, ILI9341_TFTWIDTH, ILI9341_TFTWIDTH, 0);
+        break;
+      }
+    case 1: {
+        // swap TS.X with TS.Y
+        uint16_t x = p.y;
+        p.y = p.x;
+        p.x = x;
+        break;
+      }
+    case 2: {
+        // mirror TS.Y
+        p.y = map(p.y, 0, ILI9341_TFTHEIGHT, ILI9341_TFTHEIGHT, 0);
+        break;
+      }
+    case 3: {
+        // mirror TS.X and TS.Y
+        p.x = map(p.x, 0, ILI9341_TFTWIDTH, ILI9341_TFTWIDTH, 0);
+        p.y = map(p.y, 0, ILI9341_TFTHEIGHT, ILI9341_TFTHEIGHT, 0);
+        // swap TS.X with TS.Y
+        uint16_t x = p.y;
+        p.y = p.x;
+        p.x = x;
+        break;
+      }
+  }
+  //show the touched point in the display
+  Serial.printf("TS Mapped Rotation[%i] Coordinates X = %i \tY = %i\n", lastRotation, p.x, p.y);
+  tft.fillCircle(p.x, p.y, 10, ILI9341_WHITE);
+  //delay(250); // bad for touching and drawing, good for debugging
 }
 
 unsigned long testFillScreen() {
