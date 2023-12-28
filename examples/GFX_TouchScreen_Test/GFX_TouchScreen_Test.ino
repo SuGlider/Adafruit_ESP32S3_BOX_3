@@ -15,9 +15,9 @@ ESP32S3BOX3_TS  ts = ESP32S3BOX3_TS();
 
 
 void setup() {
-  Serial.begin(115200);
-  Serial.setDebugOutput(true);
-  while (!Serial) delay(100);
+  Serial.begin(); // USB HW CDC doesn't need any baudrate
+  Serial.setDebugOutput(true);  // sends all log_e(), log_i() messages to USB HW CDC
+  Serial.setTxTimeoutMs(0);       // sets no timeout when trying to write to USB HW CDC
 
   Serial.println("ILI9341 Test!");
 
